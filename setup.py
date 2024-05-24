@@ -52,6 +52,6 @@ extmod = cythonize(
 # Set up
 setup(
     name=PKG_NAME,
-    mdclass={'build_ext': build_ext},
+    cmdclass={'build_ext': build_ext},
     ext_modules=extmod
 )
