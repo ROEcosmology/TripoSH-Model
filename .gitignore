@@ -44,3 +44,7 @@ docs/build/
 ## Editors/explorers
 .vscode/
 .DS_Store
+
+# Exclusions
+## Files: hitomi.cpp (Cythonised code)
+hitomi.cpp
