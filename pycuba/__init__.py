@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals, print_function
 import os
 import ctypes
+import platform
 from ctypes import POINTER, c_int, c_double, c_void_p, byref
 
 """
@@ -9,7 +10,10 @@ that the call is in parallel and writes to the same memory location, causing
 overrides. This could be overcome by using locks.
 """
 os.environ['CUBACORES'] = '0'
-lib = ctypes.cdll.LoadLibrary('/home/rneveux/cuba/libcuba.so')
+
+lib_dir = os.getenv('CONDA_PREFIX', '/usr/local') + '/lib'
+lib_suffix = 'dylib' if platform.system() == 'Darwin' else 'so'
+lib = ctypes.cdll.LoadLibrary(f'{lib_dir}/libcuba.{lib_suffix}')
 
 NULL = ctypes.POINTER(c_int)()
 
