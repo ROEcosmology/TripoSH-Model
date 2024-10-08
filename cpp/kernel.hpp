@@ -712,7 +712,7 @@ double Z1_Bias_FoG(double * kvec1, double * los, double f, double b1, double c1,
     double mu = MU(kvec1, los);
 	double k2 = NORM(kvec1) * NORM(kvec1);
 	double fog_c1 = c1 * mu * mu * k2 / pow(knl,2);
-	double fog_c2 = c1 * pow(mu,4) * k2 / pow(knl,2);
+	double fog_c2 = c2 * pow(mu,4) * k2 / pow(knl,2);
         return b1 + f * mu * mu - fog_c1 - fog_c2;
 }
 
