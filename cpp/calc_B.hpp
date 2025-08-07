@@ -212,9 +212,7 @@ int integrand_B_FoG_Damping(double * xx_in, int ndim, double * ff_out, int ncomp
 	    double kvec1[3] = {0.0, 0.0, kmag1};
 	    double kvec2[3] = {kbin[j] * sqrt(1.0 - mu2 * mu2), 0.0, kbin[j] * mu2};
 	    double kvec3[3] = {- kvec1[0] - kvec2[0], - kvec1[1] - kvec2[1], - kvec1[2] - kvec2[2]};
-	    double los[3]   = {sqrt(1.0 - mu * mu) * cos(phi), sqrt(1.0 - mu * mu) * sin(phi), mu};	    
-	    /********/
-	    
+	    double los[3]   = {sqrt(1.0 - mu * mu) * cos(phi), sqrt(1.0 - mu * mu) * sin(phi), mu};
 	    /********/
         double bispec = Bispectrum_Tree_FoG_Damping(kvec1, kvec2, kvec3, los, alpha_perp, alpha_parallel, f, b1, b2, bG2, c1, c2, knl, Sigma2, dSigma2);
         /********/
