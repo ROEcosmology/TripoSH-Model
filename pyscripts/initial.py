@@ -80,11 +80,16 @@ class InputPowerSpectrum():
         n_s = self.params_fid['n_s']
 
         ## compute linear matter power spectrum ##
+        from scipy.interpolate import interp1d
+        k_nw = np.loadtxt('/Users/austerlitz/Desktop/pk_linear_nw.txt')[:,0]
+        pk_nw = interp1d(k_nw,np.loadtxt('/Users/austerlitz/Desktop/pk_linear_nw.txt')[:,1],fill_value='extrapolate')
+
         for i in range(self.num_kbin):
             self.pk[i] = self.cosmo.pk_lin(self.k[i] * h, self.redshift) * h**3
             if no_wiggle:
-                self.pk_no_wiggle[i] = hitomipy.f_pk_no_wiggle_integrand_py(self.k[i] , h, Omega_b, Omega_m, Tcmb, n_s) #* h**3
-
+                #self.pk_no_wiggle[i] = hitomipy.f_pk_no_wiggle_integrand_py(self.k[i] , h, Omega_b, Omega_m, Tcmb, n_s) #* h**3
+                self.pk_no_wiggle[i] = pk_nw(self.k[i])
+        np.savetxt('/Users/austerlitz/Desktop/nowiggletest.txt',(self.k,self.pk_no_wiggle))
         self.Da = self.cosmo.angular_distance(self.redshift) * h
         self.H = self.cosmo.Hubble(self.redshift) * self._c_
         self.Dz = self.cosmo.scale_independent_growth_factor(self.redshift)
@@ -114,7 +119,7 @@ class InputPowerSpectrum():
         return self.pk_pri
 
     def getGrowthRate(self):
-        return self.fz
+        return 0.5291933215129265 #self.fz
 
     def getGrowthFactor(self):
         return self.Dz

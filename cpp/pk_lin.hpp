@@ -248,6 +248,7 @@ double f_pk_no_wiggle_integrand(double kmag, double h, double omegab, double ome
 	double T_EH = L0 / (L0 + C0*q*q );
 	
 	double Pk_lin_EH = pow(kmag,n_s) * pow(T_EH,2);
+	//double Pk_lin_EH = gsl_spline_eval(spline_pk_no_wiggle, kmag, acc_pk_no_wiggle);
 
 	return Pk_lin_EH;
 
@@ -288,7 +289,7 @@ void calcNormalizationNoWiggle(double sigma8, double h, double omegab, double om
 	integ *= dlnk / 3.0;
 	integ /= (2.0 * M_PI * M_PI);
 
-	norm_no_wiggle = sigma8 * sigma8 / integ;
+	norm_no_wiggle = 1.0; /*sigma8 * sigma8 / integ;*/
 
 }
 

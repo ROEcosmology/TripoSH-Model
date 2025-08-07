@@ -5,6 +5,7 @@ import numpy as np
 import pycuba
 import hitomipy
 import initial
+from time import time
 
 class ComputePowerBiSpectrum():
     r"""Computation of the tree level, the FoG counterterm, the shot noise and the primordial non 
@@ -74,15 +75,6 @@ class ComputePowerBiSpectrum():
             If `False` (default), Class is instanciate with params_cosmo.
         """
 
-        if cosmo is None:
-            cosmo = Class()
-            dict_cosmo = self.params_cosmo
-            dict_cosmo.update({'z_pk':self.z,'non linear':'PT','IR resummation':'Yes','Bias tracers':'Yes','cb':'Yes',
-                                        'RSD':'Yes','AP':'No', 'PNG':'No',
-                                        'output': 'mPk','z_max_pk': 3.,'P_k_max_h/Mpc': 50.})
-            cosmo.set(self.params_cosmo)
-            cosmo.compute()
-
         self.initial_cosmo = initial.InputPowerSpectrum(self.z, cosmo, params_fid=self.params_cosmo)
         self.initial_cosmo.calcMatterPowerSpectrum()
         self.k_in, self.pk_in = self.initial_cosmo.getMatterPowerSpectrum()
@@ -90,7 +82,7 @@ class ComputePowerBiSpectrum():
 
         self.f = 0 if real else self.initial_cosmo.getGrowthRate()
         self.rs_drag = cosmo.rs_drag()
-        self.sigma8_norm = self.initial_cosmo.getSigma8ForNormalization()
+        self.sigma8_norm = 1.0#self.initial_cosmo.getSigma8ForNormalization()
         self.Da,self.H = self.initial_cosmo.calcFiducialHubbleAndDiameterDistance()
         
         self.aperp = aperp
@@ -121,8 +113,10 @@ class ComputePowerBiSpectrum():
         self.fs8norm = fs8norm
         self.f_fit = f_fit
 
-        if self.diag: self.calc_K_diag(integrand=integrand)
-        else: self.calc_K_full(integrand=integrand)
+        if self.diag: 
+            self.calc_K_diag(integrand=integrand)
+        else: 
+            self.calc_K_full(integrand=integrand)
 
         if to_save: 
             self.BK['params_cosmo'] = self.params_cosmo
@@ -294,6 +288,7 @@ class ComputePowerBiSpectrum():
         AA = pycuba.Cuhre(
                     self.Integrand_K_Bk, NDIM, ncomp=NCOMP, key=0, verbose=0 | 4
                 )["results"]
+
 
         bk_temp = np.zeros((NCOMP))
         for i in range(NCOMP):
@@ -528,7 +523,8 @@ class ComputePowerBiSpectrum():
         self.fnlortho = fnlortho
         self.integrand = integrand
         
-        if f: self.f = f
+        if f: 
+            self.f = f
 
         ## flags ##
         output_dict_ini = {
@@ -823,6 +819,7 @@ class ComputePowerBiSpectrum():
         # IR resummation damping term
         self.Sigma2 = hitomipy.Sig2_py(self.rs_drag,ks)
         self.dSigma2 = hitomipy.dSig2_py(self.rs_drag,ks)
+
 
         ## compute bispectra ##
         NDIM = 3
