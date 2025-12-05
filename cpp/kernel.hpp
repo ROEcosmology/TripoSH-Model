@@ -809,13 +809,7 @@ double V1V1(double * kvec1, double * kvec2, double * los) {
 	double kn  = DOT(kvec12, los); 
 	/*double result = (kn * kn) * LV1(kvec1,los) * LV1(kvec2,los);*/
 
-<<<<<<< HEAD
 	double result = kn * ( LV1(kvec1,los)*V1(kvec2, los) + LV1(kvec2,los)*V1(kvec1, los) );
-=======
-	double tmp_mu1 = MU(kvec1, los) * MU(kvec1, los);
-	double tmp_mu2 = MU(kvec2, los) * MU(kvec2, los);	
-	double result = kn * ( LV1(kvec1,los)*tmp_mu2 + LV1(kvec2,los)*tmp_mu1 );
->>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 	return result;
 }
 
@@ -2770,7 +2764,6 @@ double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double 
         double K13 = 2.0 * Z2_Bias_G(kvec1, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec1, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
         double K23 = 2.0 * Z2_Bias_G(kvec2, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec2, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
 
-<<<<<<< HEAD
         double P1_nw = f_pk_no_wiggle(k1);
         double P2_nw = f_pk_no_wiggle(k2);
         double P3_nw = f_pk_no_wiggle(k3);
@@ -2790,30 +2783,6 @@ double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double 
         double B = (B12 + B13 + B23);
 
         return B / alpha6 ;
-=======
-        double Pw1 = f_pk(k1) - f_pk_no_wiggle(k1);
-    	double Pw2 = f_pk(k2) - f_pk_no_wiggle(k2);
-    	double Pw3 = f_pk(k3) - f_pk_no_wiggle(k3);
-
-        double B12 = K12 * ( f_pk_no_wiggle(k1) * f_pk_no_wiggle(k2)
-                                + D1 * Pw1 * f_pk_no_wiggle(k2)
-                                + D2 * Pw2 * f_pk_no_wiggle(k1)
-                                + D1 * D2 * Pw1 * Pw2 );
-
-        double B13 = K13 * ( f_pk_no_wiggle(k1) * f_pk_no_wiggle(k3)
-                                + D1 * Pw1 * f_pk_no_wiggle(k3)
-                                + D3 * Pw3 * f_pk_no_wiggle(k1)
-                                + D1 * D3 * Pw1 * Pw3 );
-
-        double B23 = K23 * ( f_pk_no_wiggle(k2) * f_pk_no_wiggle(k3)
-                                + D2 * Pw2 * f_pk_no_wiggle(k3)
-                                + D3 * Pw3 * f_pk_no_wiggle(k2)
-                                + D2 * D3 * Pw2 * Pw3 );
-    
-        double B = (B12 + B13 + B23);
-
-        return B / alpha6;
->>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 
 }
 
@@ -3163,13 +3132,8 @@ double Bispectrum_Kernel_b1_b1_f_f(double * kvec1, double * kvec2, double * los,
 	double kvec12[3] = PLUS(kvec1, kvec2);
 	double kn = DOT(kvec12, los);
 
-<<<<<<< HEAD
 	double K = ( LV1(kvec1,los) * V1(kvec2,los) + LV1(kvec2,los) * V1(kvec1,los) );
 	K += ( V1(kvec1,los) + V1(kvec2,los) ) * ( LV1(kvec1,los) + LV1(kvec2,los) );
-=======
-	double K = ( LV1(kvec1,los)*V1(kvec2,los) + LV1(kvec2,los)*V1(kvec1,los) );
-	K += (V1(kvec1,los) + V1(kvec2,los))*(LV1(kvec1,los) + LV1(kvec2,los));
->>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 
 	/*
 	double K = 2.0 * D1V1(kvec1, kvec2, los) * ( D1() * V1(kvec2, los) + V1(kvec1, los) * D1() );
@@ -3202,13 +3166,8 @@ double Bispectrum_Kernel_b1_f_f_f(double * kvec1, double * kvec2, double * los, 
     double kvec12[3] = PLUS(kvec1, kvec2);
 	double kn = DOT(kvec12, los); 
     
-<<<<<<< HEAD
     double K = 2.0 * ( LV1(kvec1,los) + LV1(kvec2,los) ) * V1(kvec1,los) * V1(kvec2,los);
     K += LV1(kvec1,los) * V1(kvec2,los) * V1(kvec2,los) + LV1(kvec2,los) * V1(kvec1,los) * V1(kvec1,los);
-=======
-    double K = ( V1(kvec1, los) + V1(kvec2, los) ) * ( LV1(kvec1,los) * V1(kvec2, los) + V1(kvec1, los) * LV1(kvec2,los) );
-    K += ( V1(kvec1, los) * V1(kvec2, los) ) * ( LV1(kvec1,los) + LV1(kvec2,los) );
->>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
     
 	K *= f * f * f * kn;
 
@@ -15872,8 +15831,4 @@ double Bispectrum_NonGaussian_From_PB_Local_f_f_f(double * kvec1_in, double * kv
 
 
 
-<<<<<<< HEAD
 #endif
-=======
-#endif
->>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
