@@ -13,6 +13,8 @@
 #include "sph.hpp"
 #endif
 
+#include <cmath>
+
 using namespace std;
 
 double MU(double * kvec1, double * kvec2) {
@@ -150,6 +152,16 @@ double beta(double * kvec1, double * kvec2) {
 double F2(double * kvec1, double * kvec2) {
 	return (5.0/14.0) * alpha(kvec1, kvec2) + (5.0/14.0) * alpha(kvec2, kvec1) + (2.0/7.0) * beta(kvec1, kvec2);
 } 
+
+/*
+double G2(double * kvec1, double * kvec2) {
+	double k1 = NORM(kvec1);
+	double k2 = NORM(kvec2);
+	double mu = DOT(kvec1, kvec2) / (k1 * k2);
+
+	return (3.0 / 7.0) + 0.5 * mu * (k1 / k2 + k2 / k1) + (4.0 / 7.0) * mu * mu;
+}
+*/
 
 double G2(double * kvec1, double * kvec2) {
 	return (3.0/14.0) * alpha(kvec1, kvec2) + (3.0/14.0) * alpha(kvec2, kvec1) + (4.0/7.0) * beta(kvec1, kvec2);
@@ -728,8 +740,11 @@ double V2(double * kvec1, double * kvec2, double * los, double f) {
 double V1V1(double * kvec1, double * kvec2, double * los, double f) {
 
 	double kvec12[3] = PLUS(kvec1, kvec2);
-	double kn  = DOT(kvec12, los); 
-	double result = (f * f) * (kn * kn) * LV1(kvec1,los) * LV1(kvec2,los);
+	double kn  = DOT(kvec12, los);
+	double tmp_mu1 = MU(kvec1, los) * MU(kvec1, los);
+	double tmp_mu2 = MU(kvec2, los) * MU(kvec2, los);
+	/*double result = (f * f) * (kn * kn) * LV1(kvec1,los) * LV1(kvec2,los);*/
+	double result = (f * f) * kn * ( LV1(kvec1,los)*tmp_mu2 + LV1(kvec2,los)*tmp_mu1 );
 	return result;
 }
 
@@ -788,10 +803,13 @@ double V2(double * kvec1, double * kvec2, double * los) {
 	return mu * mu * G2(kvec1, kvec2);
 }
 
+
 double V1V1(double * kvec1, double * kvec2, double * los) {
 	double kvec12[3] = PLUS(kvec1, kvec2);
 	double kn  = DOT(kvec12, los); 
-	double result = (kn * kn) * LV1(kvec1,los) * LV1(kvec2,los);
+	/*double result = (kn * kn) * LV1(kvec1,los) * LV1(kvec2,los);*/
+
+	double result = kn * ( LV1(kvec1,los)*V1(kvec2, los) + LV1(kvec2,los)*V1(kvec1, los) );
 	return result;
 }
 
@@ -1708,7 +1726,7 @@ double SN_bispectrum(double * kvec, double * los, double b1, double f, double Ps
 
 	double mu = MU(kvec, los);
 
-	return Bshot * b1 + 2 * f * mu * mu * (1 + Pshot);
+	return Bshot * b1 + 2 * f * mu * mu * Pshot;
 
 }
 
@@ -2654,6 +2672,7 @@ double Bispectrum_Tree_Ivanov_Damping(double * kvec1_in, double * kvec2_in, doub
 
 }
 
+/*
 double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double * kvec3_in, double * los, double alpha_perp, double alpha_parallel, double f, double b1, double b2, double bG2,
 			double c1, double c2, double knl, double Sigma2, double dSigma2) {
 
@@ -2688,8 +2707,6 @@ double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double 
 		double sqD13 = sqrt(ExpDamping_Ivanov(kvec13, los, f, Sigma2, dSigma2));
 		double sqD23 = sqrt(ExpDamping_Ivanov(kvec23, los, f, Sigma2, dSigma2));
     
-    
-    
         double K12 = 2.0 * Z2_Bias_G(kvec1, kvec2, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec1, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec2, los, f, b1, c1, c2, knl);
         double K13 = 2.0 * Z2_Bias_G(kvec1, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec1, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
         double K23 = 2.0 * Z2_Bias_G(kvec2, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec2, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
@@ -2718,6 +2735,54 @@ double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double 
         double B = (GG + GM_MG + NW);
 
         return B / alpha6;
+
+}*/
+
+double Bispectrum_Tree_FoG_Damping(double * kvec1_in, double * kvec2_in, double * kvec3_in, double * los, double alpha_perp, double alpha_parallel, double f, double b1, double b2, double bG2,
+			double c1, double c2, double knl, double Sigma2, double dSigma2) {
+
+        double alpha3 = alpha_perp * alpha_perp * alpha_parallel;
+        double alpha6 = alpha3 * alpha3;
+
+        double kvec1[3] = { 0.0, 0.0, 0.0 };
+        double kvec2[3] = { 0.0, 0.0, 0.0 };
+        double kvec3[3] = { 0.0, 0.0, 0.0 };
+
+        calcTrueWavevector(kvec1_in, los, alpha_perp, alpha_parallel, kvec1);
+        calcTrueWavevector(kvec2_in, los, alpha_perp, alpha_parallel, kvec2);
+        calcTrueWavevector(kvec3_in, los, alpha_perp, alpha_parallel, kvec3);
+
+        double k1 = NORM(kvec1);
+        double k2 = NORM(kvec2);
+        double k3 = NORM(kvec3);
+
+		double D1 = ExpDamping_Ivanov(kvec1, los, f, Sigma2, dSigma2);
+		double D2 = ExpDamping_Ivanov(kvec2, los, f, Sigma2, dSigma2);
+		double D3 = ExpDamping_Ivanov(kvec3, los, f, Sigma2, dSigma2);
+    
+        double K12 = 2.0 * Z2_Bias_G(kvec1, kvec2, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec1, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec2, los, f, b1, c1, c2, knl);
+        double K13 = 2.0 * Z2_Bias_G(kvec1, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec1, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
+        double K23 = 2.0 * Z2_Bias_G(kvec2, kvec3, los, f, b1, b2, bG2) * Z1_Bias_FoG(kvec2, los, f, b1, c1, c2, knl) * Z1_Bias_FoG(kvec3, los, f, b1, c1, c2, knl);
+
+        double P1_nw = f_pk_no_wiggle(k1);
+        double P2_nw = f_pk_no_wiggle(k2);
+        double P3_nw = f_pk_no_wiggle(k3);
+
+        double P1_w = f_pk(k1) - P1_nw;
+    	double P2_w = f_pk(k2) - P2_nw;
+    	double P3_w = f_pk(k3) - P3_nw;
+
+    	double P1_IR = P1_nw + P1_w * D1;
+		double P2_IR = P2_nw + P2_w * D2;
+		double P3_IR = P3_nw + P3_w * D3;
+
+		double B12 = K12 * P1_IR * P2_IR;
+		double B13 = K13 * P1_IR * P3_IR;
+		double B23 = K23 * P2_IR * P3_IR;
+    
+        double B = (B12 + B13 + B23);
+
+        return B / alpha6 ;
 
 }
 
@@ -2752,8 +2817,9 @@ double Bispectrum_SN_FoG_Damping(double * kvec1_in, double * kvec2_in, double * 
     	double BAO3 = f_pk(k3) - f_pk_no_wiggle(k3);
 
 		double B = K1 * (f_pk_no_wiggle(k1) + D1 * BAO1) 
-				+ K2 * (f_pk_no_wiggle(k2) + D2 * BAO2)
-				+ K3 * (f_pk_no_wiggle(k3) + D3 * BAO3);
+				 + K2 * (f_pk_no_wiggle(k2) + D2 * BAO2)
+				 + K3 * (f_pk_no_wiggle(k3) + D3 * BAO3)
+				 + Pshot * Pshot;
 
         return B / alpha6;
 
@@ -3063,16 +3129,25 @@ double Bispectrum_Kernel_b1_b1_b1_f(double * kvec1, double * kvec2, double * los
 
 double Bispectrum_Kernel_b1_b1_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn = DOT(kvec12, los);
+
+	double K = ( LV1(kvec1,los) * V1(kvec2,los) + LV1(kvec2,los) * V1(kvec1,los) );
+	K += ( V1(kvec1,los) + V1(kvec2,los) ) * ( LV1(kvec1,los) + LV1(kvec2,los) );
+
+	/*
 	double K = 2.0 * D1V1(kvec1, kvec2, los) * ( D1() * V1(kvec2, los) + V1(kvec1, los) * D1() );
 
 	K += 2.0 * (V1V1(kvec1, kvec2, los)/2.0) * D1() * D1();
+	*/
 
-	K *= f * f;
+	K *= f * f * kn;
 
     return K;
 
 }
 
+/*
 double Bispectrum_Kernel_b1_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
 	double K = 2.0 * D1V1(kvec1, kvec2, los) * V1(kvec1, los) * V1(kvec2, los);
@@ -3084,14 +3159,35 @@ double Bispectrum_Kernel_b1_f_f_f(double * kvec1, double * kvec2, double * los, 
     return K;
 
 }
+*/
+
+
+double Bispectrum_Kernel_b1_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
+    double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn = DOT(kvec12, los); 
+    
+    double K = 2.0 * ( LV1(kvec1,los) + LV1(kvec2,los) ) * V1(kvec1,los) * V1(kvec2,los);
+    K += LV1(kvec1,los) * V1(kvec2,los) * V1(kvec2,los) + LV1(kvec2,los) * V1(kvec1,los) * V1(kvec1,los);
+    
+	K *= f * f * f * kn;
+
+    return K;
+
+}
+
 
 /*********/
 
 double Bispectrum_Kernel_f_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-	double K = 2.0 * (V1V1(kvec1, kvec2, los)/2.0) * V1(kvec1, los) * V1(kvec2, los);
+	/*double K = 2.0 * (V1V1(kvec1, kvec2, los)/2.0) * V1(kvec1, los) * V1(kvec2, los);*/
 
-	K *= f * f * f * f;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn = DOT(kvec12, los); 
+
+	double K = V1(kvec1, los) * V1(kvec2, los) * ( V1(kvec1, los)* LV1(kvec2,los) + V1(kvec2, los)*LV1(kvec1,los) );
+    
+	K *= f * f * f * f * kn;
 
     return K;
 
@@ -3217,11 +3313,27 @@ double Bispectrum_Kernel_c1_f_f(double * kvec1, double * kvec2, double * los, do
 
 /*********/
 
+/*
 double Bispectrum_Kernel_c1_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
 	double K = 2.0 * (KFOG(kvec1, los) * V1(kvec2, los) + KFOG(kvec2, los) * V1(kvec1, los)) * V1V1(kvec1, kvec2, los)/2;
 
 	K *= f * f * f;
+
+    return K;
+
+}*/
+
+double Bispectrum_Kernel_c1_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
+
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+
+	double K = ( KFOG(kvec1, los) * V1(kvec2, los) + KFOG(kvec2, los) * V1(kvec1, los) ) * ( LV1(kvec1,los)*V1(kvec2,los) +  LV1(kvec2,los)*V1(kvec1,los) );
+
+    /*double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * V1V1(kvec1, kvec2, los)/2;*/
+
+	K *= f * f * f * kn;
 
     return K;
 
@@ -3285,9 +3397,12 @@ double Bispectrum_Kernel_c1_c1_b1_f(double * kvec1, double * kvec2, double * los
 
 double Bispectrum_Kernel_c1_c1_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-	double K = 2.0 * KFOG(kvec1, los) * KFOG(kvec2, los) * V1V1(kvec1, kvec2, los)/2;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
 
-	K *= f * f;
+	double K = KFOG(kvec1, los) * KFOG(kvec2, los) * (LV1(kvec1,los)*V1(kvec2,los)+LV1(kvec2,los)*V1(kvec1,los));
+
+	K *= f * f * kn;
 	
     return K;
 
@@ -3307,7 +3422,7 @@ double Bispectrum_Kernel_c2_b1_b1(double * kvec1, double * kvec2, double * los) 
 
 double Bispectrum_Kernel_c2_b1_b2(double * kvec1, double * kvec2, double * los) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) + KFOG2(kvec2, los)) * D1D1(kvec1, kvec2)/2.;
+        double K = 2.0 * (KFOG2(kvec1, los) + KFOG2(kvec2, los)) * D1D1(kvec1, kvec2) / 2.0 ;
 
     return K;
 
@@ -3325,11 +3440,18 @@ double Bispectrum_Kernel_c2_b1_bG2(double * kvec1, double * kvec2, double * los)
 
 /*********/
 
+/* IT WAS WRONG */
 double Bispectrum_Kernel_c2_b1_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * F2(kvec1,kvec2);
+    /* double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * F2(kvec1,kvec2); */
 
-		K *= f;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double mu12 = MU(kvec12,los);
+
+    double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * F2(kvec1,kvec2);
+    K += 2.0 * ( KFOG2(kvec1, los) + KFOG2(kvec2, los) ) * G2(kvec1,kvec2) * mu12 * mu12;
+
+	K *= f;
 
     return K;
 
@@ -3339,9 +3461,9 @@ double Bispectrum_Kernel_c2_b1_f(double * kvec1, double * kvec2, double * los, d
 
 double Bispectrum_Kernel_c2_b1_b1_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) + KFOG2(kvec2, los)) * D1V1(kvec1, kvec2, los);
+    double K = 2.0 * ( KFOG2(kvec1, los) + KFOG2(kvec2, los) ) * D1V1(kvec1, kvec2, los);
 
-		K *= f;
+	K *= f;
 
     return K;
 
@@ -3351,47 +3473,54 @@ double Bispectrum_Kernel_c2_b1_b1_f(double * kvec1, double * kvec2, double * los
 
 double Bispectrum_Kernel_c2_b1_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) + KFOG2(kvec2, los)) * (V1V1(kvec1, kvec2, los)/2.0);
+    /*    double K = 2.0 * (KFOG2(kvec1, los) + KFOG2(kvec2, los)) * (V1V1(kvec1, kvec2, los)/2.0);
 
         K += 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * D1V1(kvec1,kvec2,los);
 
-		K *= f * f;
-
-    return K;
+		K *= f * f; */
+	
+    double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn = DOT(kvec12, los);
+	
+	double K = KFOG2(kvec1, los) * (V1(kvec1,los) + V1(kvec2,los)) * LV1(kvec2,los);
+	K += KFOG2(kvec2, los) * (V1(kvec1,los) + V1(kvec2,los)) * LV1(kvec1,los);
+	K += 2.0 * ( KFOG2(kvec1, los) * LV1(kvec1,los) * V1(kvec2,los) + KFOG2(kvec2, los) * LV1(kvec2,los) * V1(kvec1,los) );
+    
+    return K * f * f * kn;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c2_b2_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) / 2.0;
+    double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) / 2.0;
 
-		K *= f;
+	K *= f;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c2_bG2_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * G1G1(kvec1, kvec2);
+    double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * G1G1(kvec1, kvec2);
 
-		K *= f;
+	K *= f;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */ 
 double Bispectrum_Kernel_c2_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * V2(kvec1, kvec2, los);
+    double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * V2(kvec1, kvec2, los);
 
-		K *= f * f;
+	K *= f * f;
 
     return K;
 
@@ -3401,51 +3530,56 @@ double Bispectrum_Kernel_c2_f_f(double * kvec1, double * kvec2, double * los, do
 
 double Bispectrum_Kernel_c2_f_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * V1V1(kvec1, kvec2, los)/2;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
 
-		K *= f * f * f;
+	double K = ( KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los) ) * ( LV1(kvec1,los)*V1(kvec2,los) +  LV1(kvec2,los)*V1(kvec1,los) );
+
+    /*double K = 2.0 * (KFOG2(kvec1, los) * V1(kvec2, los) + KFOG2(kvec2, los) * V1(kvec1, los)) * V1V1(kvec1, kvec2, los)/2;*/
+
+	K *= f * f * f * kn;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c1_c2_b1(double * kvec1, double * kvec2, double * los) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * F2(kvec1, kvec2);
+    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * F2(kvec1, kvec2);
 
     return K;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c1_c2_b2(double * kvec1, double * kvec2, double * los) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) / 2.0;
+    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) / 2.0;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c1_c2_bG2(double * kvec1, double * kvec2, double * los) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * G1G1(kvec1, kvec2);
+    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * G1G1(kvec1, kvec2);
 
     return K;
 
 }
 
 /*********/
-
+/* OK */ 
 double Bispectrum_Kernel_c1_c2_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * V2(kvec1, kvec2, los);
+    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * V2(kvec1, kvec2, los);
 
-		K *= f;
+	K *= f;
 
     return K;
 
@@ -3455,11 +3589,22 @@ double Bispectrum_Kernel_c1_c2_f(double * kvec1, double * kvec2, double * los, d
 
 double Bispectrum_Kernel_c1_c2_b1_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * D1V1(kvec1, kvec2, los);
+    /*    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * D1V1(kvec1, kvec2, los); */
 
-		K *= f;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+	double k1 = NORM(kvec1);
+	double k2 = NORM(kvec2);
+	double mu1 = MU(kvec1, los);
+	double mu2 = MU(kvec2, los);
 
-    return K;
+	double K = mu1/k1 * ( KFOG(kvec2,los)*KFOG2(kvec1,los) + KFOG(kvec1,los)*KFOG2(kvec2,los) );
+	
+	K += mu2/k2 * ( KFOG(kvec1,los)*KFOG2(kvec2,los) + KFOG(kvec2,los)*KFOG2(kvec1,los) );
+
+	K *= f;
+
+    return K * kn;
 
 }
 
@@ -3467,16 +3612,16 @@ double Bispectrum_Kernel_c1_c2_b1_f(double * kvec1, double * kvec2, double * los
 
 double Bispectrum_Kernel_c1_c2_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-        double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * V1V1(kvec1, kvec2, los)/2;
+    double K = 2.0 * (KFOG(kvec1, los) * KFOG2(kvec2, los) + KFOG2(kvec1, los) * KFOG(kvec2, los)) * V1V1(kvec1, kvec2, los)/2;
 
-		K *= f * f;
+	K *= f * f;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c2_c2_b1(double * kvec1, double * kvec2, double * los) {
 
 	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) * F2(kvec1, kvec2);
@@ -3486,7 +3631,7 @@ double Bispectrum_Kernel_c2_c2_b1(double * kvec1, double * kvec2, double * los) 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c2_c2_b2(double * kvec1, double * kvec2, double * los) {
 
 	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) / 2.0;
@@ -3496,7 +3641,7 @@ double Bispectrum_Kernel_c2_c2_b2(double * kvec1, double * kvec2, double * los) 
 }
 
 /*********/
-
+/* OK */
 double Bispectrum_Kernel_c2_c2_bG2(double * kvec1, double * kvec2, double * los) {
 
 	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) * G1G1(kvec1, kvec2);
@@ -3506,12 +3651,12 @@ double Bispectrum_Kernel_c2_c2_bG2(double * kvec1, double * kvec2, double * los)
 }
 
 /*********/
-
+/* OK */ 
 double Bispectrum_Kernel_c2_c2_f(double * kvec1, double * kvec2, double * los, double f) {
 
 	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) * V2(kvec1, kvec2, los);
 
-		K *= f;
+	K *= f;
 
     return K;
 
@@ -3519,27 +3664,78 @@ double Bispectrum_Kernel_c2_c2_f(double * kvec1, double * kvec2, double * los, d
 
 /*********/
 
+/* OK */ 
 double Bispectrum_Kernel_c2_c2_b1_f(double * kvec1, double * kvec2, double * los, double f) {
 
 	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) * D1V1(kvec1, kvec2, los);
 
-		K *= f;
+	K *= f;
 
     return K;
 
 }
 
 /*********/
-
+/* OK */ 
 double Bispectrum_Kernel_c2_c2_f_f(double * kvec1, double * kvec2, double * los, double f) {
 
-	double K = 2.0 * KFOG2(kvec1, los) * KFOG2(kvec2, los) * V1V1(kvec1, kvec2, los)/2;
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
 
-		K *= f * f;
+	double K = KFOG2(kvec1, los) * KFOG2(kvec2, los) * (LV1(kvec1,los)*V1(kvec2,los) + LV1(kvec2,los)*V1(kvec1,los));
+
+	K *= f * f * kn;
 	
     return K;
 
 }
+
+double Bispectrum_Kernel_c1_c1_c1_f(double * kvec1, double * kvec2, double * los, double f){
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+
+	double K = LV1(kvec1,los)*(KFOG(kvec1,los)*KFOG(kvec1,los)*KFOG(kvec2,los)) + LV1(kvec2,los)*(KFOG(kvec2,los)*KFOG(kvec1,los)*KFOG(kvec2,los));
+
+	K *= kn*f/2.0;
+
+	return 2.0*K;
+}
+
+double Bispectrum_Kernel_c2_c2_c2_f(double * kvec1, double * kvec2, double * los, double f){
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+
+	double K = LV1(kvec1,los)*(KFOG2(kvec1,los)*KFOG2(kvec1,los)*KFOG2(kvec2,los)) + LV1(kvec2,los)*(KFOG2(kvec2,los)*KFOG2(kvec1,los)*KFOG2(kvec2,los));
+
+	K *= kn*f/2.0;
+
+	return 2.0*K;
+}
+
+double Bispectrum_Kernel_c1_c1_c2_f(double * kvec1, double * kvec2, double * los, double f){
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+	double term1 = KFOG(kvec1,los)*KFOG(kvec1,los)*KFOG2(kvec2,los) + KFOG(kvec1,los)*KFOG2(kvec1,los)*KFOG(kvec2,los) + KFOG2(kvec1,los)*KFOG(kvec1,los)*KFOG(kvec2,los);
+	double term2 = KFOG(kvec2,los)*KFOG(kvec1,los)*KFOG2(kvec2,los) + KFOG(kvec2,los)*KFOG2(kvec1,los)*KFOG(kvec2,los) + KFOG2(kvec2,los)*KFOG(kvec1,los)*KFOG(kvec2,los);
+	double K = LV1(kvec1,los)*term1 + LV1(kvec2,los)*term2;
+
+	K *= kn*f/2.0;
+
+	return 2.0*K;
+}
+
+double Bispectrum_Kernel_c2_c2_c1_f(double * kvec1, double * kvec2, double * los, double f){
+	double kvec12[3] = PLUS(kvec1, kvec2);
+	double kn  = DOT(kvec12, los);
+	double term1 = KFOG2(kvec1,los)*KFOG2(kvec1,los)*KFOG(kvec2,los) + KFOG2(kvec1,los)*KFOG(kvec1,los)*KFOG2(kvec2,los) + KFOG(kvec1,los)*KFOG2(kvec1,los)*KFOG2(kvec2,los);
+	double term2 = KFOG2(kvec2,los)*KFOG2(kvec1,los)*KFOG(kvec2,los) + KFOG2(kvec2,los)*KFOG(kvec1,los)*KFOG2(kvec2,los) + KFOG(kvec2,los)*KFOG2(kvec1,los)*KFOG2(kvec2,los);
+	double K = LV1(kvec1,los)*term1 + LV1(kvec2,los)*term2;
+
+	K *= kn*f/2.0;
+
+	return 2.0*K;
+}
+
 
 /*********/
 
@@ -3619,6 +3815,14 @@ double Bispectrum_Kernel_Pshot_f_c2(double * kvec1, double * los, double f) {
 	double K = 2.0 * V1(kvec1, los) * KFOG2(kvec1, los);
 
 	K *= f;
+	
+    return K;
+
+}
+
+double Bispectrum_Kernel_Pshot_Pshot(double * kvec1, double * los, double f) {
+
+	double K = 1.0;
 	
     return K;
 
@@ -15628,4 +15832,3 @@ double Bispectrum_NonGaussian_From_PB_Local_f_f_f(double * kvec1_in, double * kv
 
 
 #endif
-

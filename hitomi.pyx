@@ -548,12 +548,12 @@ cdef extern from "cpp/calc_B.hpp":
     int integrand_B_Kernel(
             double * xx_in, int ndim, double * ff_out, int ncomp, 
             double * kbin, int num_k_bin, int ell1, int ell2, int ELL, double kmag1, double f, 
-            double Sigma2, double dSigma2, char * parameters)
+            double Sigma2, double dSigma2, double alpha_perp, double alpha_parallel, char * parameters)
 
     int integrand_B_Kernel_SN(
             double * xx_in, int ndim, double * ff_out, int ncomp, 
             double * kbin, int num_k_bin, int ell1, int ell2, int ELL, double kmag1, double f, 
-            double Sigma2, double dSigma2, char * parameters)
+            double Sigma2, double dSigma2, double alpha_perp, double alpha_parallel, char * parameters)
 
     int integrand_B_Kernel_diag(
             double * xx_in, int ndim, double * ff_out, int ncomp,
@@ -2733,11 +2733,11 @@ def integrand_cov_PB_NG_P5_diag_py(
 def integrand_B_Kernel_py(
         np.ndarray[double, ndim=1, mode="c"] xx_in not None, int ndim, np.ndarray[double, ndim=1, mode="c"] ff_out not None, int ncomp,
         np.ndarray[double, ndim=1, mode="c"] kbin not None, int num_k_bin, int ell1, int ell2, int ELL, double kmag1, double f,
-        double Sigma2, double dSigma2, char * parameters
+        double Sigma2, double dSigma2, double alpha_perp, double alpha_parallel, char * parameters
         ):
     return integrand_B_Kernel(
             &xx_in[0], ndim, &ff_out[0], ncomp,
-            &kbin[0], num_k_bin, ell1, ell2, ELL, kmag1, f, Sigma2, dSigma2,
+            &kbin[0], num_k_bin, ell1, ell2, ELL, kmag1, f, Sigma2, dSigma2, alpha_perp, alpha_parallel,
             &parameters[0])
 
 ################################
@@ -2745,11 +2745,11 @@ def integrand_B_Kernel_py(
 def integrand_B_Kernel_SN_py(
         np.ndarray[double, ndim=1, mode="c"] xx_in not None, int ndim, np.ndarray[double, ndim=1, mode="c"] ff_out not None, int ncomp,
         np.ndarray[double, ndim=1, mode="c"] kbin not None, int num_k_bin, int ell1, int ell2, int ELL, double kmag1, double f,
-        double Sigma2, double dSigma2, char * parameters
+        double Sigma2, double dSigma2, double alpha_perp, double alpha_parallel, char * parameters
         ):
     return integrand_B_Kernel_SN(
             &xx_in[0], ndim, &ff_out[0], ncomp,
-            &kbin[0], num_k_bin, ell1, ell2, ELL, kmag1, f, Sigma2, dSigma2,
+            &kbin[0], num_k_bin, ell1, ell2, ELL, kmag1, f, Sigma2, dSigma2, alpha_perp, alpha_parallel,
             &parameters[0])
 
 ################################
