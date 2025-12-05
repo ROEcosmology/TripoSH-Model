@@ -290,7 +290,11 @@ void calcNormalizationNoWiggle(double sigma8, double h, double omegab, double om
 	integ *= dlnk / 3.0;
 	integ /= (2.0 * M_PI * M_PI);
 
+<<<<<<< HEAD
 	/* norm_no_wiggle = 1.0; */
+=======
+	/* norm_no_wiggle = 1.0;*/
+>>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 	norm_no_wiggle = sigma8 * sigma8 / integ;
 
 }

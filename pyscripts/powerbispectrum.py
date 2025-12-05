@@ -81,9 +81,14 @@ class ComputePowerBiSpectrum():
         self.pk_in_no_wiggle = self.initial_cosmo.getNoWigglePowerSpectrum()
 
         self.f = 0 if real else self.initial_cosmo.getGrowthRate()
+<<<<<<< HEAD
         self.rs_drag = cosmo.rs_drag()*cosmo.h()
         #self.sigma8_norm = 1.0
         self.sigma8_norm = self.initial_cosmo.getSigma8ForNormalization()
+=======
+        self.rs_drag = cosmo.rs_drag()
+        self.sigma8_norm = 1.0#self.initial_cosmo.getSigma8ForNormalization()
+>>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
         self.Da,self.H = self.initial_cosmo.calcFiducialHubbleAndDiameterDistance()
         
         self.aperp = aperp
@@ -292,6 +297,7 @@ class ComputePowerBiSpectrum():
         AA = pycuba.Cuhre(
             self.Integrand_K_Bk, NDIM, ncomp=NCOMP, key=0, verbose=0 | 4
         )["results"]
+
 
         bk_temp = np.zeros((NCOMP))
         for i in range(NCOMP):

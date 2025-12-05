@@ -509,9 +509,42 @@ int integrand_B_Kernel(double * xx_in, int ndim, double * ff_out, int ncomp, dou
         double kvec2[3] = { 0.0, 0.0, 0.0 };
         double kvec3[3] = { 0.0, 0.0, 0.0 };
 
+<<<<<<< HEAD
 	    calcTrueWavevector(kvec1_in, los, alpha_perp, alpha_parallel, kvec1);
 	    calcTrueWavevector(kvec2_in, los, alpha_perp, alpha_parallel, kvec2);
 	    calcTrueWavevector(kvec3_in, los, alpha_perp, alpha_parallel, kvec3);
+=======
+	    double k1 = NORM(kvec1);
+	    double k2 = NORM(kvec2);
+	    double k3 = NORM(kvec3);
+
+	    double BAO1 = f_pk(k1) - f_pk_no_wiggle(k1);
+        double BAO2 = f_pk(k2) - f_pk_no_wiggle(k2);
+        double BAO3 = f_pk(k3) - f_pk_no_wiggle(k3);
+
+	    double bispec = K12 * (BAO1 * BAO2 
+					* ExpDamping_Ivanov(kvec1, los, f, Sigma2, dSigma2) * ExpDamping_Ivanov(kvec2, los, f, Sigma2, dSigma2)
+					+ BAO1 * f_pk_no_wiggle(k2) 
+					* ExpDamping_Ivanov(kvec1, los, f, Sigma2, dSigma2)
+					+ f_pk_no_wiggle(k1) * BAO2 
+					* ExpDamping_Ivanov(kvec2, los, f, Sigma2, dSigma2)
+					+ f_pk_no_wiggle(k1) * f_pk_no_wiggle(k2))
+				+ K13 * (BAO1 * BAO3 
+					* ExpDamping_Ivanov(kvec1, los, f, Sigma2, dSigma2) * ExpDamping_Ivanov(kvec3, los, f, Sigma2, dSigma2)
+					+ BAO1 * f_pk_no_wiggle(k3) 
+					* ExpDamping_Ivanov(kvec1, los, f, Sigma2, dSigma2)
+					+ f_pk(k1) * BAO3 
+					* ExpDamping_Ivanov(kvec3, los, f, Sigma2, dSigma2)
+					+ f_pk_no_wiggle(k1) * f_pk_no_wiggle(k3))
+				+ K23 * (BAO2 * BAO3 
+					* ExpDamping_Ivanov(kvec2, los, f, Sigma2, dSigma2) * ExpDamping_Ivanov(kvec3, los, f, Sigma2, dSigma2)
+					+ BAO2 * f_pk_no_wiggle(k3) 
+					* ExpDamping_Ivanov(kvec2, los, f, Sigma2, dSigma2)
+					+ f_pk(k2) * BAO3 
+					* ExpDamping_Ivanov(kvec3, los, f, Sigma2, dSigma2)
+					+ f_pk_no_wiggle(k2) * f_pk_no_wiggle(k3));
+        
+>>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 	    
 	    double k1 = NORM(kvec1);
         double k2 = NORM(kvec2);
@@ -598,6 +631,7 @@ int integrand_B_Kernel_diag(double * xx_in, int ndim, double * ff_out, int ncomp
         double K13 = Bispectrum_Kernel(kvec1, kvec3, los, f, parameters);
         double K23 = Bispectrum_Kernel(kvec2, kvec3, los, f, parameters);
 
+<<<<<<< HEAD
         double P1_nw = f_pk_no_wiggle(k1);
         double P2_nw = f_pk_no_wiggle(k2);
         double P3_nw = f_pk_no_wiggle(k3);
@@ -615,6 +649,28 @@ int integrand_B_Kernel_diag(double * xx_in, int ndim, double * ff_out, int ncomp
 		double B23 = K23 * P2_IR * P3_IR;
 
 		double B = (B12 + B13 + B23);		
+=======
+        double Pw1 = f_pk(k1) - f_pk_no_wiggle(k1);
+    	double Pw2 = f_pk(k2) - f_pk_no_wiggle(k2);
+    	double Pw3 = f_pk(k3) - f_pk_no_wiggle(k3);
+
+    	double B12 = K12 * ( f_pk_no_wiggle(k1) * f_pk_no_wiggle(k2)
+                                + D1 * Pw1 * f_pk_no_wiggle(k2)
+                                + D2 * Pw2 * f_pk_no_wiggle(k1)
+                                + D1 * D2 * Pw1 * Pw2 );
+
+        double B13 = K13 * ( f_pk_no_wiggle(k1) * f_pk_no_wiggle(k3)
+                                + D1 * Pw1 * f_pk_no_wiggle(k3)
+                                + D3 * Pw3 * f_pk_no_wiggle(k1)
+                                + D1 * D3 * Pw1 * Pw3 );
+
+        double B23 = K23 * ( f_pk_no_wiggle(k2) * f_pk_no_wiggle(k3)
+                                + D2 * Pw2 * f_pk_no_wiggle(k3)
+                                + D3 * Pw3 * f_pk_no_wiggle(k2)
+                                + D2 * D3 * Pw2 * Pw3 );
+    
+        double B = (B12 + B13 + B23);
+>>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
 
 	    double Nlll = (2.0*double(ell1)+1.0) * (2.0*double(ell2)+1.0) * (2.0*double(ELL)+1.0);
 	    double Slll = calcYYY(mu1, phi1, mu2, phi2, mu, phi, ell1, ell2, ELL);

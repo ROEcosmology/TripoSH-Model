@@ -80,8 +80,13 @@ class InputPowerSpectrum():
         n_s = self.params_fid['n_s']
 
         ## compute linear matter power spectrum ##
+<<<<<<< HEAD
         #from scipy.interpolate import interp1d
         #k_nw = np.loadtxt('/Users/austerlitz/Desktop/pk_linear_nw.txt')[:,0]
+=======
+        from scipy.interpolate import interp1d
+        k_nw = np.loadtxt('/Users/austerlitz/Desktop/pk_linear_nw.txt')[:,0]
+>>>>>>> 87035c7c900844f72d80b24d39085cb0225be3fd
         #pk_nw = interp1d(k_nw,np.loadtxt('/Users/austerlitz/Desktop/pk_linear_nw.txt')[:,1],fill_value='extrapolate')
 
         for i in range(self.num_kbin):
@@ -120,6 +125,7 @@ class InputPowerSpectrum():
 
     def getGrowthRate(self):
         return self.fz
+        #return 0.5291933215129265 #self.fz
 
     def getGrowthFactor(self):
         return self.Dz
